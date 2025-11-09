@@ -621,11 +621,185 @@ function plotFunction(equation, roots = []) {
 function compareMethods(results) {
     let html = '<div class="comparison-table"><h3>Method Comparison</h3><table>';
     html += '<tr><th>Method</th><th>Root</th><th>Iterations</th><th>Final Error %</th><th>Status</th></tr>';
-    
+
     Object.keys(results).forEach(method => {
         const result = results[method];
         const iterations = result.iterations;
-        
-        if (iterations.length > 0) {
+
+        let root = '-';
+        let numIterations = 0;
+        let error = '-';
+        let status = '';
+
+        if (result.errorMessage) {
+            status = `<span class="status-error">Error</span>`;
+            // You could log the full error: console.log(`${method} Error:`, result.errorMessage);
+        } else if (iterations.length > 0) {
+            numIterations = iterations.length;
             const lastIteration = iterations[iterations.length - 1];
-            const status =
+            
+            // Check for '-', as secant method has it on first iter
+            error = (lastIteration.error !== null && lastIteration.error !== '-' && typeof lastIteration.error === 'number') 
+                ? lastIteration.error.toFixed(6) 
+                : '-';
+
+            if (result.root !== null) {
+                root = result.root.toFixed(8);
+                status = '<span class="status-success">Converged</span>';
+            } else {
+                status = '<span class="status-warning">No Convergence</span>';
+            }
+        } else {
+            status = '<span class="status-warning">No Iterations</span>';
+        }
+
+        html += `
+            <tr>
+                <td>${method}</td>
+                <td>${root}</td>
+                <td>${numIterations}</td>
+                <td>${error}</td>
+                <td>${status}</td>
+            </tr>
+        `;
+    });
+
+    html += '</table></div>';
+    comparisonOutput.innerHTML = html;
+}
+
+// --- Event Listeners and Initialization ---
+
+// Initialize parameters UI on method change
+methodSelect.addEventListener('change', initMethodParams);
+
+// Initialize parameters UI on page load
+window.addEventListener('DOMContentLoaded', initMethodParams);
+
+// Handle calculation on button click
+calculateBtn.addEventListener('click', handleCalculate);
+
+// Main function to handle calculation
+function handleCalculate() {
+    // 1. Show loading spinners and clear old results
+    resultsOutput.innerHTML = '';
+    comparisonOutput.innerHTML = '';
+    plotContainer.innerHTML = '';
+    loadingResults.style.display = 'block';
+    loadingComparison.style.display = 'block';
+    
+    // 2. Get common inputs
+    const equation = equationInput.value;
+    const tolerance = parseFloat(toleranceInput.value);
+    const maxIterations = parseInt(maxIterationsInput.value);
+    const method = methodSelect.value;
+    
+    // 3. Create RootFinder instance
+    let finder;
+    try {
+        finder = new RootFinder(equation, tolerance, maxIterations);
+    } catch (error) {
+        resultsOutput.innerHTML = `<div class="error-message">${error.message}</div>`;
+        loadingResults.style.display = 'none';
+        loadingComparison.style.display = 'none';
+        return;
+    }
+
+    let results = {};
+    let singleMethodHtml = '';
+    
+    // Helper to safely run methods
+    const runMethod = (methodName, params) => {
+        try {
+            // Use .apply to pass params as an array
+            return finder[methodName].apply(finder, params);
+        } catch (error) {
+            return { iterations: [], root: null, errorMessage: `Calculation error: ${error.message}` };
+        }
+    };
+    
+    // 4. Logic for "all" vs "single" method
+    if (method === 'all') {
+        try {
+            // Get all params
+            const bisectionA = parseFloat(document.getElementById('bisectionA').value);
+            const bisectionB = parseFloat(document.getElementById('bisectionB').value);
+            const falsePositionA = parseFloat(document.getElementById('falsePositionA').value);
+            const falsePositionB = parseFloat(document.getElementById('falsePositionB').value);
+            const fixedPointX0 = parseFloat(document.getElementById('fixedPointX0').value);
+            const fixedPointG = document.getElementById('fixedPointG').value;
+            const newtonX0 = parseFloat(document.getElementById('newtonX0').value);
+            const secantX0 = parseFloat(document.getElementById('secantX0').value);
+            const secantX1 = parseFloat(document.getElementById('secantX1').value);
+
+            // Run all
+            results['Bisection'] = runMethod('bisection', [bisectionA, bisectionB]);
+            results['False Position'] = runMethod('falsePosition', [falsePositionA, falsePositionB]);
+            results['Fixed Point'] = runMethod('fixedPoint', [fixedPointX0, fixedPointG]);
+            results['Newton-Raphson'] = runMethod('newtonRaphson', [newtonX0]);
+            results['Secant'] = runMethod('secant', [secantX0, secantX1]);
+            
+            // Display comparison
+            compareMethods(results);
+            
+            // Display individual results
+            singleMethodHtml += displayResults('Bisection Method', results['Bisection']);
+            singleMethodHtml += displayResults('False Position Method', results['False Position']);
+            singleMethodHtml += displayResults('Fixed Point Iteration', results['Fixed Point']);
+            singleMethodHtml += displayResults('Newton-Raphson Method', results['Newton-Raphson']);
+            singleMethodHtml += displayResults('Secant Method', results['Secant']);
+            resultsOutput.innerHTML = singleMethodHtml;
+
+        } catch (error) {
+             resultsOutput.innerHTML = `<div class="error-message">Error getting parameters for 'All Methods': ${error.message}</div>`;
+        }
+    } else {
+        // Run single method
+        let result;
+        let methodName = '';
+        try {
+            if (method === 'bisection') {
+                methodName = 'Bisection Method';
+                const a = parseFloat(document.getElementById('bisectionA').value);
+                const b = parseFloat(document.getElementById('bisectionB').value);
+                result = finder.bisection(a, b);
+            } else if (method === 'falsePosition') {
+                methodName = 'False Position Method';
+                const a = parseFloat(document.getElementById('falsePositionA').value);
+                const b = parseFloat(document.getElementById('falsePositionB').value);
+                result = finder.falsePosition(a, b);
+            } else if (method === 'fixedPoint') {
+                methodName = 'Fixed Point Iteration';
+                const x0 = parseFloat(document.getElementById('fixedPointX0').value);
+                const g = document.getElementById('fixedPointG').value;
+                result = finder.fixedPoint(x0, g);
+            } else if (method === 'newtonRaphson') {
+                methodName = 'Newton-Raphson Method';
+                const x0 = parseFloat(document.getElementById('newtonX0').value);
+                result = finder.newtonRaphson(x0);
+            } else if (method === 'secant') {
+                methodName = 'Secant Method';
+                const x0 = parseFloat(document.getElementById('secantX0').value);
+                const x1 = parseFloat(document.getElementById('secantX1').value);
+                result = finder.secant(x0, x1);
+            }
+            
+            resultsOutput.innerHTML = displayResults(methodName, result);
+            results[methodName] = result; // Add to results for plotting
+            
+        } catch (error) {
+            resultsOutput.innerHTML = `<div class="error-message">Error getting parameters for ${method}: ${error.message}</div>`;
+        }
+    }
+    
+    // 5. Plotting
+    const roots = Object.values(results)
+        .map(r => r.root)
+        .filter(root => root !== null); // Get all valid, non-null roots
+        
+    plotFunction(equation, [...new Set(roots)]); // Use Set to avoid duplicate root markers
+
+    // 6. Hide loading spinners
+    loadingResults.style.display = 'none';
+    loadingComparison.style.display = 'none';
+}
