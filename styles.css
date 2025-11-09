@@ -276,3 +276,19 @@ footer {
     color: var(--gray);
     font-size: 0.9rem;
 }
+
+/* Status indicators for comparison table */
+.status-success {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.status-error {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.status-warning {
+    color: var(--warning);
+    font-weight: 600;
+}
