@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numerical Root Finding Methods</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Numerical Root Finding Methods</h1>
+            <p class="subtitle">Find roots of equations using various numerical methods</p>
+        </header>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="equation">Equation f(x) = 0</label>
+                    <input type="text" id="equation" placeholder="e.g., x^3 - 2*x - 5" value="x^3 - 2*x - 5">
+                    <small>Use JavaScript math syntax: x^2 for x², sin(x), exp(x), etc.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tolerance">Tolerance</label>
+                    <input type="number" id="tolerance" step="0.000001" value="0.000001" min="0.000000001">
+                </div>
+
+                <div class="form-group">
+                    <label for="maxIterations">Maximum Iterations</label>
+                    <input type="number" id="maxIterations" value="100" min="1" max="1000">
+                </div>
+
+                <div class="form-group">
+                    <label for="method">Method</label>
+                    <select id="method">
+                        <option value="all">All Methods</option>
+                        <option value="bisection">Bisection Method</option>
+                        <option value="falsePosition">False Position Method</option>
+                        <option value="fixedPoint">Fixed Point Iteration</option>
+                        <option value="newtonRaphson">Newton-Raphson Method</option>
+                        <option value="secant">Secant Method</option>
+                    </select>
+                </div>
+
+                <div id="methodParams" class="method-params">
+                    <!-- Method-specific parameters will be inserted here -->
+                </div>
+
+                <button id="calculateBtn">Calculate Roots</button>
+
+                <div class="method-info">
+                    <div class="method-card">
+                        <h4>Bisection Method</h4>
+                        <p>Requires an interval [a,b] where f(a) and f(b) have opposite signs. Guaranteed to converge but relatively slow.</p>
+                    </div>
+                    <div class="method-card">
+                        <h4>False Position Method</h4>
+                        <p>Similar to bisection but uses linear interpolation. Usually faster than bisection.</p>
+                    </div>
+                    <div class="method-card">
+                        <h4>Fixed Point Iteration</h4>
+                        <p>Requires rewriting f(x)=0 as x=g(x). Convergence depends on the choice of g(x).</p>
+                    </div>
+                    <div class="method-card">
+                        <h4>Newton-Raphson Method</h4>
+                        <p>Uses derivative information for faster convergence. Requires a good initial guess.</p>
+                    </div>
+                    <div class="method-card">
+                        <h4>Secant Method</h4>
+                        <p>Similar to Newton-Raphson but doesn't require derivative calculation. Needs two initial guesses.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-tabs">
+                    <div class="tab active" data-tab="results">Results</div>
+                    <div class="tab" data-tab="plot">Plot</div>
+                    <div class="tab" data-tab="comparison">Comparison</div>
+                </div>
+
+                <div id="resultsContent" class="tab-content active">
+                    <div id="resultsContainer">
+                        <div class="loading" id="loadingResults" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Calculating roots...</p>
+                        </div>
+                        <div id="resultsOutput"></div>
+                    </div>
+                </div>
+
+                <div id="plotContent" class="tab-content">
+                    <div class="plot-container" id="plotContainer"></div>
+                </div>
+
+                <div id="comparisonContent" class="tab-content">
+                    <div id="comparisonContainer">
+                        <div class="loading" id="loadingComparison" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Calculating comparison...</p>
+                        </div>
+                        <div id="comparisonOutput"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Numerical Root Finding Methods &copy; 2023 | Built with JavaScript</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
